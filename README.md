@@ -20,7 +20,7 @@ git clone https://github.com/znnpd/znn-stresstest-analysis.git
 ```
 cd znn-stresstest-analysis
 ```
-3. Ensure that dependency to Zenon Dart SDK is correctly defined in `pubspec.yaml`
+3. Ensure that the `path`to Zenon Dart SDK dependency is correctly defined in `pubspec.yaml`
 ```yaml
 dependencies:
     znn_sdk_dart:

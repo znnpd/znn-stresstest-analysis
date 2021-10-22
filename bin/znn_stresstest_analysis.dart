@@ -61,7 +61,7 @@ void main() async {
   print('---------------');
   
   // Close connection
+  print('Closing connection to Network of Momentum...');
   zenon.wsClient.stop();
-  print('Connection to Network of Momentum closed...');
 
 }
