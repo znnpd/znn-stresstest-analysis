@@ -424,7 +424,7 @@ packages:
   znn_sdk_dart:
     dependency: "direct main"
     description:
-      path: "../znn_sdk_dart_4-1-0"
+      path: "../znn_sdk_dart"
       relative: true
     source: path
     version: "4.1.0"

@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   znn_sdk_dart:
-    path: '../znn_sdk_dart_4-1-0'
+    path: '../znn_sdk_dart'
 
 
 dev_dependencies:

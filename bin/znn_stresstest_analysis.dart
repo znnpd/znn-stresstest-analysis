@@ -1,17 +1,16 @@
 import 'package:znn_sdk_dart/znn_sdk_dart.dart';
 import 'dart:io';
 
-
 void main() async {
 
   // Set start and end time to be analysed
-  const startTime = '2021-10-16 19:00:00Z'; // In UTC, remove 'Z' as last char for local time
-  const endTime = '2021-10-16 20:01:00Z'; // In UTC, remove 'Z' as last char for local time
+  const startTime = '2021-11-07 09:20:00Z'; // In UTC, remove 'Z' as last char for local time
+  const endTime = '2021-11-07 09:26:00Z'; // In UTC, remove 'Z' as last char for local time
   
   // Create connection
   final zenon = Zenon();
   final client = zenon.wsClient;
-  await client.initialize('ws://127.0.0.1:35998', retry: false); // Or use a public available node
+  await client.initialize('ws://peers.zenon.wiki:35998', retry: false); // Or use a public available node
   if (client.isClosed()) {
     print('Could not establish connection, check connection to node.');
     exit(0);
@@ -24,34 +23,34 @@ void main() async {
   final endTimeMillis = DateTime.parse(endTime).millisecondsSinceEpoch;
   final endTimeSecs = (endTimeMillis / 1000).toInt(); // Seconds since epochs needed in Zenon SDK
   
-  var totalNumberOfMomentums = 0;
-  var totalNumberOfTxs = 0;
-  var largestMomentumNumberOfBlocks = 0;
-  var largestMomentumHeight = 0;
-  Hash largestMomentumHash = Hash.parse('0000000000000000000000000000000000000000000000000000000000000000');
+  num totalNumberOfMomentums = 0;
+  num totalNumberOfTxs = 0;
+  num largestMomentumNumberOfBlocks = 0;
+  num largestMomentumHeight = 0;
+  String largestMomentumHash = '';
   
-
   // Read momentums
-  final lastMomentum = await zenon.ledger.getMomentumBeforeTime(startTimeSecs); // Read last momentum before start time
-  var currentDetailedMomentum = await zenon.ledger.getDetailedMomentumsByHeight(lastMomentum!.height! + 1, 1);  // Read details of first momentum within specified time frame
+  print(startTimeSecs);
+  final lastMomentum = await client.sendRequest('ledger.getMomentumBeforeTime', [startTimeSecs]);
+  var currentDetailedMomentum = await client.sendRequest('ledger.getDetailedMomentumsByHeight', [lastMomentum!['height']! + 1, 1]);
   while (true) {
-    if (currentDetailedMomentum[0].momentum.timestamp! > endTimeSecs) {
+    if (currentDetailedMomentum['list'][0]['momentum']['timestamp'] > endTimeSecs) {
       break;
     }
     totalNumberOfMomentums += 1;
-    totalNumberOfTxs = totalNumberOfTxs + currentDetailedMomentum[0].blocks.length; // Blocks seem to be transactions
+    totalNumberOfTxs = totalNumberOfTxs + currentDetailedMomentum['list'][0]['blocks'].length; // Blocks seem to be transactions
 
-    if (currentDetailedMomentum[0].blocks.length > largestMomentumNumberOfBlocks) {
-      largestMomentumNumberOfBlocks = currentDetailedMomentum[0].blocks.length;
-      largestMomentumHeight = currentDetailedMomentum[0].momentum.height!;
-      largestMomentumHash = currentDetailedMomentum[0].momentum.hash!;
+    if (currentDetailedMomentum['list'][0]['blocks'].length > largestMomentumNumberOfBlocks) {
+      largestMomentumNumberOfBlocks = currentDetailedMomentum['list'][0]['blocks'].length;
+      largestMomentumHeight = currentDetailedMomentum['list'][0]['momentum']['height'];
+      largestMomentumHash = currentDetailedMomentum['list'][0]['momentum']['hash'];
     }
-    currentDetailedMomentum = await zenon.ledger.getDetailedMomentumsByHeight(currentDetailedMomentum[0].momentum.height! + 1, 1);
+    currentDetailedMomentum = await client.sendRequest('ledger.getDetailedMomentumsByHeight', [currentDetailedMomentum['list'][0]['momentum']['height'] + 1, 1]);
   }
 
   // Print results
-  var avgNumberOfTxsPerMomentum = (totalNumberOfTxs / totalNumberOfMomentums).toInt();
-  var avgTransactionsPerSecond = (totalNumberOfTxs / (endTimeSecs - startTimeSecs)).toInt();
+  num avgNumberOfTxsPerMomentum = (totalNumberOfTxs / totalNumberOfMomentums);
+  num avgTransactionsPerSecond = (totalNumberOfTxs / (endTimeSecs - startTimeSecs));
   print('--- RESULTS ---');
   print('>> Total number of momentums: ${totalNumberOfMomentums}');
   print('>> Total number of transactions: ${totalNumberOfTxs}');
@@ -59,7 +58,7 @@ void main() async {
   print('>> Average number of transactions per momentum: ${avgNumberOfTxsPerMomentum}');
   print('>> Largest momentum produced: Height ${largestMomentumHeight} (hash ${largestMomentumHash}) with ${largestMomentumNumberOfBlocks} transactions');
   print('---------------');
-  
+
   // Close connection
   print('Closing connection to Network of Momentum...');
   zenon.wsClient.stop();
